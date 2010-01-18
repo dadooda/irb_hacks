@@ -1,3 +1,5 @@
+require "yaml"
+
 Dir[File.join(File.dirname(__FILE__), "irb_hacks/**/*.rb")].each {|fn| require fn}
 
 module IrbHacks
