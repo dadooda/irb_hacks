@@ -66,7 +66,7 @@ Snippets support code blocks. It's a `Proc` called `block` in snippet context. U
     {:uid=>"3", :name=>"adm"}
     ...
 
-Snippets are **persistent** though IRB invocations. That's quite handy, since not all stuff can be dynamically reloaded and sometimes we have to restart IRB to ensure clean reload.
+Snippets are **persistent** though IRB invocations. That's quite handy, since not all stuff can be dynamically reloaded and sometimes we have to restart IRB to ensure a clean reload.
 
     irb> ae
     (snippet)>> puts "Snippets are persistent!"
@@ -77,7 +77,7 @@ Snippets are **persistent** though IRB invocations. That's quite handy, since no
 
 Just in case, snippet history file is called `.irb_snippet_history` in your `$HOME`.
 
-Snippets maintain **their own** Realine history. When you press [Up] and [Down] keys in `ae`, you browse the previously used snippets, not just your previous IRB input. Don't retype the snippet you used yesterday -- press [Up] a couple times and you'll see it.
+Snippets maintain **their own** Readline history. When you press [Up] and [Down] keys in `ae`, you browse the previously used snippets, not just your previous IRB input. Don't retype the snippet you used yesterday -- press [Up] a couple times and you'll see it.
 
     irb> ae
     (snippet)>> puts "snippet one"
