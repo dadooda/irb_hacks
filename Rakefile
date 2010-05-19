@@ -1,3 +1,5 @@
+#require 'rake/gempackagetask'
+
 GEM_NAME = "irb_hacks"
 
 begin
@@ -30,3 +32,7 @@ task :push do
   pkgfile = File.join("pkg", [GEM_NAME, "-", version, ".gem"].to_s)
   Kernel.system("gem", "push", pkgfile)
 end
+
+#Rake::GemPackageTask.new(spec) do |p|
+#  p.need_tar = true if RUBY_PLATFORM !~ /mswin/
+#end

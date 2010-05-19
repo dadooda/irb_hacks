@@ -1,10 +1,10 @@
-Yet another set of IRB hacks
+Yet Another Set of IRB Hacks
 ============================
 
 Setup
 -----
 
-    $ gem sources --add http://gemcutter.org
+    $ gem sources --add http://rubygems.org
     $ gem install irb_hacks
 
 Add to your `~/.irbrc`:

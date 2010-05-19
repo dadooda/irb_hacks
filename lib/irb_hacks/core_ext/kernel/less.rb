@@ -31,7 +31,7 @@ module IrbHacks   #:nodoc:
             # Non-block invocation.
             if args.size < 1
               # We're interactive anyway. Why not give user a quick prompt?
-              STDERR.puts "Nothing to show. Invoke as less(args) or less(options, &block)."
+              STDERR.puts "Nothing to show. Invoke as less(args) or less(options, &block)"
             else
               File.popen(less_cmd, "w") do |f|
                 f.puts args
@@ -69,21 +69,28 @@ module IrbHacks   #:nodoc:
               STDOUT.reopen(old_stdout)
               STDERR.reopen(old_stderr) if o_stderr
             end
-          end # if block or no block.
+          end # if block
 
           nil
         end # less
       end # SingletonMethods
 
-      ::Kernel.extend SingletonMethods
+      module InstanceMethods
+        private
+
+        def less(*args, &block)
+          ::Kernel.less(*args, &block)
+        end
+      end # InstanceMethods
     end # Kernel
   end # CoreExtensions
 end
 
-module Kernel   #:nodoc:
-  private
+Kernel.extend IrbHacks::CoreExtensions::Kernel::SingletonMethods
 
-  def less(*args, &block)
-    ::Kernel.less(*args, &block)
-  end
+module Kernel   #:nodoc:
+  include IrbHacks::CoreExtensions::Kernel::InstanceMethods
 end
+
+# Reinclude module into those using it.
+ObjectSpace.each_object(Module) {|m| (m.class_eval {include Kernel} if m.include? Kernel) rescue nil}
