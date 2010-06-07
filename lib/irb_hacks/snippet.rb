@@ -59,9 +59,17 @@ module IrbHacks   #:nodoc:
     end
 
     # Run code snippet.
+    # If an <tt>IrbHacks::ValueNow</tt> is raised anywhere, return its message.
+    #   raise IrbHacks::ValueNow, myobject
     def self.run(*args, &block)
       if (code = @history.last)
-        eval(code, &block)
+        begin
+          eval(code, &block)
+        rescue IrbHacks::ValueNow => e
+          # NOTE: If e.message is a string, it's automatically prefixed by
+          #       "(eval):1:in `run':" by Ruby (or IRB, dunno). Non-strings are fine.
+          e.message
+        end
       end
     end
 

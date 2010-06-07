@@ -11,6 +11,8 @@ module IrbHacks
     @less_cmd = cmd
   end
 
+  class ValueNow < StandardError; end
+
   #--------------------------------------- Defaults
 
   self.less_cmd = "less -R"
