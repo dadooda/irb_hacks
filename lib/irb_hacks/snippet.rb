@@ -2,8 +2,9 @@ require "readline"
 
 module IrbHacks   #:nodoc:
   module Snippet
+    #TODO: Configured values. Config is common for entire IrbHacks.
     HISTORY_FILE = File.join(ENV["HOME"], ".irb_snippet_history")
-    HISTORY_SIZE = 20
+    HISTORY_SIZE = 500
 
     # Edit code snippet.
     def self.edit
@@ -55,7 +56,7 @@ module IrbHacks   #:nodoc:
         nil
       end
 
-      @history = [%{puts "YOUR test code here"}] if not @history.is_a? Array
+      @history = [%{puts "YOUR test code here"}] if not @history
     end
 
     # Run code snippet.
