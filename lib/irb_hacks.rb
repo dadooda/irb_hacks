@@ -3,8 +3,12 @@ require "yaml"
 Dir[File.join(File.dirname(__FILE__), "irb_hacks/**/*.rb")].each {|fn| require fn}
 
 module IrbHacks
-  def self.ValueNow(value)
-    raise ValueNowException, [value]
+  # Break execution, return value if invoked from `a`.
+  #
+  #   IrbHacks.break
+  #   IrbHacks.break("hi")
+  def self.break(value = nil)
+    raise BreakException, [value]
   end
 
   def self.less_cmd
@@ -15,7 +19,7 @@ module IrbHacks
     @less_cmd = cmd
   end
 
-  class ValueNowException < StandardError; end
+  class BreakException < Exception; end
 
   #--------------------------------------- Defaults
 

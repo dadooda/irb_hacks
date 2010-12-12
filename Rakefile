@@ -12,7 +12,7 @@ begin
     gem.homepage = "http://github.com/dadooda/irb_hacks"
     gem.authors = ["Alex Fortuna"]
     gem.files = FileList[
-      "[A-Z]*.*",
+      "[A-Z]*",
       "*.gemspec",
       "lib/**/*.rb",
     ]
@@ -36,3 +36,18 @@ end
 #Rake::GemPackageTask.new(spec) do |p|
 #  p.need_tar = true if RUBY_PLATFORM !~ /mswin/
 #end
+
+desc "Compile README preview"
+task :readme do
+  require "kramdown"
+
+  doc = Kramdown::Document.new(File.read "README.md")
+
+  fn = "README.html"
+  puts "Writing '#{fn}'..."
+  File.open(fn, "w") do |f|
+    f.write(File.read "dev/head.html")
+    f.write(doc.to_html)
+  end
+  puts ": ok"
+end

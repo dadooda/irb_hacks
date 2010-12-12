@@ -55,7 +55,7 @@ Snippets work just like normal Ruby methods -- they return the value of the last
     charlie
     zulu
 
-Snippets support code blocks. It's a `Proc` called `block` in snippet context. Usage example follows (suppose we're building a simplistic `/etc/passwd` parser).
+Snippets support code blocks. It's a `Proc` called `block` in snippet context. Usage example follows (suppose you're building a simplistic `/etc/passwd` parser).
 
     irb> ae
     (snippet)>> File.readlines("/etc/passwd").map(&block).each {|s| p s}; nil
@@ -66,7 +66,7 @@ Snippets support code blocks. It's a `Proc` called `block` in snippet context. U
     {:uid=>"3", :name=>"adm"}
     ...
 
-Snippets are **persistent** though IRB invocations. That's quite handy, since not all stuff can be dynamically reloaded and sometimes we have to restart IRB to ensure a clean reload.
+Snippets are **persistent** though IRB invocations. That's quite handy, since not all stuff can be dynamically reloaded and sometimes one has to restart IRB to ensure a clean reload.
 
     irb> ae
     (snippet)>> puts "Snippets are persistent!"
@@ -89,10 +89,11 @@ Snippets maintain **their own** Readline history. When you press [Up] and [Down]
     irb> moo
     irb> ae
     (snippet)>>
-    ## Pressing [Up] will give you...
+    # Pressing [Up] will give you...
     (snippet)>> puts "snippet two"
-    ## Pressing [Up] again will give you...
+    # Pressing [Up] again will give you...
     (snippet)>> puts "snippet one"
+
 
 ### Browse program data with GNU `less` ###
 
@@ -102,9 +103,9 @@ To solve that, the greatest paging program of all times, GNU `less`, comes to th
 
     $ irb
     irb> files = Dir["/etc/*"].sort
-    ## Some bulky array...
+    # Some bulky array...
     irb> less files
-    ## ... which we browse interactively :).
+    # ... which you browse interactively!
 
 In block form, `less` hack intercepts everything output to `STDOUT` (and, optionally, to `STDERR`), and feeds it to the pager.
 
@@ -128,7 +129,36 @@ To specify another paging program or tweak `less` options, write in your `~/.irb
 , or something else you find appropriate.
 
 
+### Break execution and return instant value ###
+
+By using `IrbHacks.break(value)` you break snippet execution and make it return `value`. This is a simple yet powerful debugging technique.
+
+Suppose you're debugging the code which contains something like:
+
+    csv.each_with_index do |fc_row, i|
+      row = OpenHash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
+      ...
+
+There's something wrong with the code and you want to see if `row` is given the correct value. To do it, use `IrbHacks.break`:
+
+    csv.each_with_index do |fc_row, i|
+      row = OpenHash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
+      IrbHacks.break(row)
+
+Now all you have to do is write an `ae` snippet and call it. `row` value will be available in IRB for inspection:
+
+    irb> ae
+    (snippet)>> Klass.new.method(args)
+    irb> row = a
+    # Back in IRB. Do whatever you want with `row` value now.
+    irb>
+
+Each `IrbHacks.break` call raises an `IrbHacks::BreakException`. If you see them popping out during runtime, find the appropriate `IrbHacks.break` calls and defuse them.
+
+
 Feedback
 --------
 
 Send bug reports, suggestions and criticisms through [project's page on GitHub](http://github.com/dadooda/irb_hacks).
+
+Licensed under the MIT License.

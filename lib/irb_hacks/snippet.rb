@@ -60,14 +60,12 @@ module IrbHacks   #:nodoc:
     end
 
     # Run code snippet.
-    # If <tt>IrbHacks#ValueNow</tt> is invoked anywhere, return its argument.
-    #
-    #   IrbHacks.ValueNow(myobj)
+    # If <tt>IrbHacks.break</tt> is called anywhere, immediately return its argument.
     def self.run(*args, &block)
       if (code = @history.last)
         begin
           eval(code, &block)
-        rescue IrbHacks::ValueNowException => e
+        rescue IrbHacks::BreakException => e
           # If invoked as documented, `e.message` is always an array.
           e.message[0]
         end

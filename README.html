@@ -1,0 +1,176 @@
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+  <link href="dev/github.css" rel="stylesheet" type="text/css" />
+</head>
+<h1 id="yet-another-set-of-irb-hacks">Yet Another Set of IRB Hacks</h1>
+
+<h2 id="setup">Setup</h2>
+
+<pre><code>$ gem sources --add http://rubygems.org
+$ gem install irb_hacks
+</code></pre>
+
+<p>Add to your <code>~/.irbrc</code>:</p>
+
+<pre><code>require "rubygems"
+require "irb_hacks"
+</code></pre>
+
+<p>Now fire up IRB for a quick test:</p>
+
+<pre><code>$ irb
+irb&gt; ae
+(snippet)&gt;&gt;
+</code></pre>
+
+<p>If you see “(snippet)”, you’re ready to go.</p>
+
+<h2 id="the-hacks">The Hacks</h2>
+
+<h3 id="code-snippets----a-and-ae">Code snippets – <code>a</code> and <code>ae</code></h3>
+
+<p>There’s often a need to invoke our work-in-progress code a number of times using the same arguments, wrapping block, etc. For that, “code snippets” feature is quite handy.</p>
+
+<p><code>irb_hacks</code> gem provides the two methods with short, meaningless (and thus conflict-free) names – <code>a</code> and <code>ae</code>. <code>a</code> means nothing, it’s just the first letter of the alphabet. <code>a</code> <strong>invokes</strong> the last-edited snippet. <code>ae</code> <strong>lets you edit</strong> the actual snippet (it roughly stands for “a” + “edit”).</p>
+
+<p>A very basic example:</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; puts "Hello, world"
+irb&gt; a
+Hello, world
+</code></pre>
+
+<p>Snippet arguments are supported. It’s an array called <code>args</code> in snippet context.</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; p "args", args
+irb&gt; a 10, 1.0, "a string"
+"args"
+[10, 1.0, "a string"]
+</code></pre>
+
+<p>Snippets work just like normal Ruby methods – they return the value of the last statement executed.</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; ["alfa", "zulu", "bravo"] + args
+irb&gt; puts a("charlie").sort
+alfa
+bravo
+charlie
+zulu
+</code></pre>
+
+<p>Snippets support code blocks. It’s a <code>Proc</code> called <code>block</code> in snippet context. Usage example follows (suppose you’re building a simplistic <code>/etc/passwd</code> parser).</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; File.readlines("/etc/passwd").map(&amp;block).each {|s| p s}; nil
+irb&gt; a {|s| ar = s.split(":"); {:name =&gt; ar[0], :uid =&gt; ar[2]}}
+{:uid=&gt;"0", :name=&gt;"root"}
+{:uid=&gt;"1", :name=&gt;"bin"}
+{:uid=&gt;"2", :name=&gt;"daemon"}
+{:uid=&gt;"3", :name=&gt;"adm"}
+...
+</code></pre>
+
+<p>Snippets are <strong>persistent</strong> though IRB invocations. That’s quite handy, since not all stuff can be dynamically reloaded and sometimes one has to restart IRB to ensure a clean reload.</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; puts "Snippets are persistent!"
+irb&gt; exit
+$ irb
+irb&gt; a
+Snippets are persistent!
+</code></pre>
+
+<p>Just in case, snippet history file is called <code>.irb_snippet_history</code> in your <code>$HOME</code>.</p>
+
+<p>Snippets maintain <strong>their own</strong> Readline history. When you press [Up] and [Down] keys in <code>ae</code>, you browse the previously used snippets, not just your previous IRB input. Don’t retype the snippet you used yesterday – press [Up] a couple times and you’ll see it.</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; puts "snippet one"
+irb&gt; hala
+irb&gt; bala
+irb&gt; ae
+(snippet)&gt;&gt; puts "snippet two"
+irb&gt; foo
+irb&gt; moo
+irb&gt; ae
+(snippet)&gt;&gt;
+# Pressing [Up] will give you...
+(snippet)&gt;&gt; puts "snippet two"
+# Pressing [Up] again will give you...
+(snippet)&gt;&gt; puts "snippet one"
+</code></pre>
+
+<h3 id="browse-program-data-with-gnu-less">Browse program data with GNU <code>less</code></h3>
+
+<p>Sometimes the data your code works with is too long to fit in a console window. The clearest example of this are variables filled with text content, e.g. <a href="http://github.com/whymirror/hpricot">Hpricot</a> documents/elements.</p>
+
+<p>To solve that, the greatest paging program of all times, GNU <code>less</code>, comes to the rescue.</p>
+
+<pre><code>$ irb
+irb&gt; files = Dir["/etc/*"].sort
+# Some bulky array...
+irb&gt; less files
+# ... which you browse interactively!
+</code></pre>
+
+<p>In block form, <code>less</code> hack intercepts everything output to <code>STDOUT</code> (and, optionally, to <code>STDERR</code>), and feeds it to the pager.</p>
+
+<pre><code>$ irb
+irb&gt; less do
+puts "Hello, world"
+end
+</code></pre>
+
+<p>Now with <code>STDERR</code> capture:</p>
+
+<pre><code>$ irb
+irb&gt; less(:stderr) do
+puts "to stdout"
+STDERR.puts "to stderr"
+end
+</code></pre>
+
+<p>To specify another paging program or tweak <code>less</code> options, write in your <code>~/.irbrc</code>:</p>
+
+<pre><code>IrbHacks.less_cmd = "more"
+</code></pre>
+
+<p>, or something else you find appropriate.</p>
+
+<h3 id="break-execution-and-return-instant-value">Break execution and return instant value</h3>
+
+<p>By using <code>IrbHacks.break(value)</code> you break snippet execution and make it return <code>value</code>. This is a simple yet powerful debugging technique.</p>
+
+<p>Suppose you’re debugging the code which contains something like:</p>
+
+<pre><code>csv.each_with_index do |fc_row, i|
+  row = OpenHash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
+  ...
+</code></pre>
+
+<p>There’s something wrong with the code and you want to see if <code>row</code> is given the correct value. To do it, use <code>IrbHacks.break</code>:</p>
+
+<pre><code>csv.each_with_index do |fc_row, i|
+  row = OpenHash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
+  IrbHacks.break(row)
+</code></pre>
+
+<p>Now all you have to do is write an <code>ae</code> snippet and call it. <code>row</code> value will be available in IRB for inspection:</p>
+
+<pre><code>irb&gt; ae
+(snippet)&gt;&gt; Klass.new.method(args)
+irb&gt; row = a
+# Back in IRB. Do whatever you want with `row` value now.
+irb&gt;
+</code></pre>
+
+<p>Each <code>IrbHacks.break</code> call raises an <code>IrbHacks::BreakException</code>. If you see them popping out during runtime, find the appropriate <code>IrbHacks.break</code> calls and defuse them.</p>
+
+<h2 id="feedback">Feedback</h2>
+
+<p>Send bug reports, suggestions and criticisms through <a href="http://github.com/dadooda/irb_hacks">project’s page on GitHub</a>.</p>
+
+<p>Licensed under the MIT License.</p>
