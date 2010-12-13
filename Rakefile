@@ -1,3 +1,4 @@
+require "yaml"
 #require 'rake/gempackagetask'
 
 GEM_NAME = "irb_hacks"
@@ -24,12 +25,12 @@ end
 desc "Rebuild gemspec and package"
 task :rebuild => [:gemspec, :build]
 
-desc "Push (publish) gem to Gemcutter"
+desc "Push (publish) gem to RubyGems.org"
 task :push do
   # Yet found no way to ask Jeweler forge a complete version string for us.
   vh = YAML.load(File.read("VERSION.yml"))
-  version = [vh[:major], vh[:minor], vh[:patch]].join(".")
-  pkgfile = File.join("pkg", [GEM_NAME, "-", version, ".gem"].to_s)
+  version = [vh[:major], vh[:minor], vh[:patch], (if (v = vh[:build]); v; end)].compact.join(".")
+  pkgfile = File.join("pkg", [GEM_NAME, "-", version, ".gem"].join)
   Kernel.system("gem", "push", pkgfile)
 end
 
