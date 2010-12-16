@@ -2,28 +2,7 @@ module IrbHacks   #:nodoc:
   module CoreExtensions   #:nodoc:
     module Kernel   #:nodoc:
       module SingletonMethods
-        # Dump program data with GNU <tt>less</tt>.
-        #
-        # Plain form:
-        #   less "hello", "world"
-        #   less mydata
-        #
-        # Block form:
-        #   less do
-        #     puts "hello, world"
-        #   end
-        #
-        #   less(:stderr => true) do
-        #     puts "to stdout"
-        #     STDERR.puts "to stderr"
-        #   end
-        #
-        # Block form options:
-        #   :stderr => T|F      # Redirect STDERR too.
-        #
-        # If block form option is <tt>String</tt> or <tt>Symbol</tt>, it's automatically
-        # converted to a hash like <tt>{:var => true}</tt>. Thus, <tt>less(:stderr => true)</tt>
-        # and <tt>less(:stderr)</tt> are identical.
+        # See <tt>InstanceMethods</tt> for documentation.
         def less(*args, &block)
           less_cmd = IrbHacks.less_cmd
 
@@ -78,6 +57,28 @@ module IrbHacks   #:nodoc:
       module InstanceMethods
         private
 
+        # Dump program data with GNU <tt>less</tt>.
+        #
+        # Plain form:
+        #   less "hello", "world"
+        #   less mydata
+        #
+        # Block form:
+        #   less do
+        #     puts "hello, world"
+        #   end
+        #
+        #   less(:stderr => true) do
+        #     puts "to stdout"
+        #     STDERR.puts "to stderr"
+        #   end
+        #
+        # Block form options:
+        #   :stderr => T|F      # Redirect STDERR too.
+        #
+        # If block form option is <tt>String</tt> or <tt>Symbol</tt>, it's automatically
+        # converted to a hash like <tt>{:var => true}</tt>. Thus, <tt>less(:stderr => true)</tt>
+        # and <tt>less(:stderr)</tt> are identical.
         def less(*args, &block)
           ::Kernel.less(*args, &block)
         end
