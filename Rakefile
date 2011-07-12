@@ -1,5 +1,5 @@
+require "rake/rdoctask"
 require "yaml"
-#require 'rake/gempackagetask'
 
 GEM_NAME = "irb_hacks"
 
@@ -32,6 +32,15 @@ task :push do
   version = [vh[:major], vh[:minor], vh[:patch], (if (v = vh[:build]); v; end)].compact.join(".")
   pkgfile = File.join("pkg", [GEM_NAME, "-", version, ".gem"].join)
   Kernel.system("gem", "push", pkgfile)
+end
+
+desc "Generate RDoc documentation"
+Rake::RDocTask.new(:rdoc) do |rdoc|
+  rdoc.rdoc_dir = "doc"
+  rdoc.title    = "IrbHacks"
+  #rdoc.options << "--line-numbers"
+  #rdoc.options << "--inline-source"
+  rdoc.rdoc_files.include("lib/**/*.rb")
 end
 
 #Rake::GemPackageTask.new(spec) do |p|

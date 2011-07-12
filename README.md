@@ -28,14 +28,14 @@ The Hacks
 
 There's often a need to invoke our work-in-progress code a number of times using the same arguments, wrapping block, etc. For that, "code snippets" feature is quite handy.
 
-`irb_hacks` gem provides the two methods with short, meaningless (and thus conflict-free) names -- `a` and `ae`. `a` means nothing, it's just the first letter of the alphabet. `a` **invokes** the last-edited snippet. `ae` **lets you edit** the actual snippet (it roughly stands for "a" + "edit").
+`irb_hacks` provides the two methods with short, meaningless (and thus conflict-free) names -- `a` and `ae`. `a` means nothing, it's just the first letter of the alphabet. `a` **invokes** the last-edited snippet. `ae` **lets you edit** the actual snippet (it roughly stands for "a" + "edit").
 
 A very basic example:
 
     irb> ae
-    (snippet)>> puts "Hello, world"
+    (snippet)>> puts "Hello, world!"
     irb> a
-    Hello, world
+    Hello, world!
 
 Snippet arguments are supported. It's an array called `args` in snippet context.
 
@@ -55,7 +55,7 @@ Snippets work just like normal Ruby methods -- they return the value of the last
     charlie
     zulu
 
-Snippets support code blocks. It's a `Proc` called `block` in snippet context. Usage example follows (suppose you're building a simplistic `/etc/passwd` parser).
+Snippets support code blocks. It's a `Proc` object called `block` in snippet context. Usage example follows. Suppose you're building a simplistic `/etc/passwd` parser. You put the actual reading in the snippet, but do line data manipulation in a block:
 
     irb> ae
     (snippet)>> File.readlines("/etc/passwd").map(&block).each {|s| p s}; nil
@@ -66,7 +66,7 @@ Snippets support code blocks. It's a `Proc` called `block` in snippet context. U
     {:uid=>"3", :name=>"adm"}
     ...
 
-Snippets are **persistent** though IRB invocations. That's quite handy, since not all stuff can be dynamically reloaded and sometimes one has to restart IRB to ensure a clean reload.
+Snippets are **persistent** thoughout IRB invocations. That's quite handy, since not all stuff can be dynamically reloaded and sometimes we have to restart IRB to ensure a clean reload.
 
     irb> ae
     (snippet)>> puts "Snippets are persistent!"
@@ -75,9 +75,9 @@ Snippets are **persistent** though IRB invocations. That's quite handy, since no
     irb> a
     Snippets are persistent!
 
-Just in case, snippet history file is called `.irb_snippet_history` in your `$HOME`.
+Just in case, snippet history file is called `~/.irb_snippet_history` by default.
 
-Snippets maintain **their own** Readline history. When you press [Up] and [Down] keys in `ae`, you browse the previously used snippets, not just your previous IRB input. Don't retype the snippet you used yesterday -- press [Up] a couple times and you'll see it.
+Snippets maintain **their own** Readline history. When you press [Up] and [Down] keys in `ae`, you browse the previously used snippets, not just your previous IRB input. So don't retype the snippet you used yesterday -- press [Up] a few times and you'll see it.
 
     irb> ae
     (snippet)>> puts "snippet one"
@@ -94,6 +94,8 @@ Snippets maintain **their own** Readline history. When you press [Up] and [Down]
     # Pressing [Up] again will give you...
     (snippet)>> puts "snippet one"
 
+You can configure some aspects of the snippets. Read "Configuration" chapter below.
+
 
 ### Browse program data with GNU `less` ###
 
@@ -105,7 +107,7 @@ To solve that, the greatest paging program of all times, GNU `less`, comes to th
     irb> files = Dir["/etc/*"].sort
     # Some bulky array...
     irb> less files
-    # ... which you browse interactively!
+    # ...which you browse interactively!
 
 In block form, `less` hack intercepts everything output to `STDOUT` (and, optionally, to `STDERR`), and feeds it to the pager.
 
@@ -122,16 +124,12 @@ Now with `STDERR` capture:
     STDERR.puts "to stderr"
     end
 
-To specify another paging program or tweak `less` options, write in your `~/.irbrc`:
-
-    IrbHacks.less_cmd = "more"
-
-, or something else you find appropriate.
+You can configure which pager program to use and with which options. Read "Configuration" chapter below.
 
 
 ### Break execution and return instant value ###
 
-By using `IrbHacks.break(value)` you break snippet execution and make it return `value`. This is a simple yet powerful debugging technique.
+By using `IrbHacks.break(value)` you break snippet (`a`) execution and make it return `value`. This is a simple yet powerful debugging technique.
 
 Suppose you're debugging the code which contains something like:
 
@@ -153,7 +151,26 @@ Now all you have to do is write an `ae` snippet and call it. `row` value will be
     # Back in IRB. Do whatever you want with `row` value now.
     irb>
 
-Each `IrbHacks.break` call raises an `IrbHacks::BreakException`. If you see them popping out during runtime, find the appropriate `IrbHacks.break` calls and defuse them.
+Each `IrbHacks.break` call raises an `IrbHacks::BreakException`. If you see them popping out runtime, find the appropriate `IrbHacks.break` calls and defuse them.
+
+
+Configuration
+-------------
+
+Via `IrbHacks.conf` object you can configure various features of `irb_hacks`. Add `IrbHacks.conf` manipulation code to your `.irbrc`:
+
+    require "rubygems"
+    require "irb_hacks"
+
+    IrbHacks.conf.snippet_prompt = ">>> "
+
+
+### Configuration Variables (`IrbHacks.conf.*`)###
+
+* `less_cmd` -- System command to invoke pager for `less`.
+* `snippet_history_file` -- Snippet (`a`, `ae`) history file.
+* `snippet_history_size` -- Snippet history size.
+* `snippet_prompt` -- Snippet input prompt.
 
 
 Feedback

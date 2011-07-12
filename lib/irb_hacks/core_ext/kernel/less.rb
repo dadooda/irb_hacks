@@ -1,18 +1,16 @@
-module IrbHacks   #:nodoc:
+module IrbHacks
   module CoreExtensions   #:nodoc:
     module Kernel   #:nodoc:
-      module SingletonMethods
-        # See <tt>InstanceMethods</tt> for documentation.
+      module SingletonMethods   #:nodoc:
+        # See InstanceMethods for documentation.
         def less(*args, &block)
-          less_cmd = IrbHacks.less_cmd
-
           if not block
             # Non-block invocation.
             if args.size < 1
               # We're interactive anyway. Why not give user a quick prompt?
               STDERR.puts "Nothing to show. Invoke as less(args) or less(options, &block)"
             else
-              File.popen(less_cmd, "w") do |f|
+              File.popen(IrbHacks.conf.less_cmd, "w") do |f|
                 f.puts args
               end
             end
@@ -41,7 +39,7 @@ module IrbHacks   #:nodoc:
             old_stdout = STDOUT.clone
             old_stderr = STDERR.clone if o_stderr
 
-            File.popen(less_cmd, "w") do |f|
+            File.popen(IrbHacks.conf.less_cmd, "w") do |f|
               STDOUT.reopen(f)
               STDERR.reopen(f) if o_stderr
               yield
@@ -57,13 +55,15 @@ module IrbHacks   #:nodoc:
       module InstanceMethods
         private
 
-        # Dump program data with GNU <tt>less</tt>.
+        # Dump program data with GNU <tt>less</tt> or the other configured OS pager.
         #
         # Plain form:
+        #
         #   less "hello", "world"
         #   less mydata
         #
         # Block form:
+        #
         #   less do
         #     puts "hello, world"
         #   end
@@ -74,11 +74,14 @@ module IrbHacks   #:nodoc:
         #   end
         #
         # Block form options:
+        #
         #   :stderr => T|F      # Redirect STDERR too.
         #
-        # If block form option is <tt>String</tt> or <tt>Symbol</tt>, it's automatically
-        # converted to a hash like <tt>{:var => true}</tt>. Thus, <tt>less(:stderr => true)</tt>
-        # and <tt>less(:stderr)</tt> are identical.
+        # If block form option is String or Symbol, it's automatically
+        # converted to Hash like <tt>{:var => true}</tt>. Thus, you can write <tt>less(:stderr)</tt>
+        # for <tt>less(:stderr => true)</tt>, they are functionally identical.
+        #
+        # See also IrbHacks::Config::less_cmd.
         def less(*args, &block)
           ::Kernel.less(*args, &block)
         end

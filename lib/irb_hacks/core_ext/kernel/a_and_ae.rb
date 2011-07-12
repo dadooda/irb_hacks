@@ -1,29 +1,25 @@
-module IrbHacks   #:nodoc:
+module IrbHacks
   module CoreExtensions   #:nodoc:
     module Kernel   #:nodoc:
-      module SingletonMethods
-        # See <tt>InstanceMethods</tt> for documentation.
+      module SingletonMethods   #:nodoc:
         def a(*args, &block)
-          IrbHacks::Snippet.run(*args, &block)
+          Snippet.run(*args, &block)
         end
 
-        # See <tt>InstanceMethods</tt> for documentation.
         def ae(*args)
-          IrbHacks::Snippet.edit(*args)
+          Snippet.edit(*args)
         end
       end # SingletonMethods
 
       module InstanceMethods
         private
 
-        # Run code snippet.
-        # See <tt>IrbHacks::Snippet.run</tt>.
+        # Run code snippet. See IrbHacks::Snippet::run.
         def a(*args, &block)
           ::Kernel.a(*args, &block)
         end
 
-        # Edit code snippet.
-        # See <tt>IrbHacks::Snippet.edit</tt>.
+        # Interactively edit code snippet. See IrbHacks::Snippet::edit.
         def ae(*args)
           ::Kernel.ae(*args)
         end

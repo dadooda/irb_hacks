@@ -1,43 +1,66 @@
 require "readline"
 
-module IrbHacks   #:nodoc:
+module IrbHacks
+  # Snippet manipulation internals.
   module Snippet
-    #TODO: Configured values. Config is common for entire IrbHacks.
-    HISTORY_FILE = File.join(ENV["HOME"], ".irb_snippet_history")
-    HISTORY_SIZE = 500
+    # Initializer.
+    def self._initialize    #:nodoc:
+      load_history
+    end
 
-    # Edit code snippet.
+    # On-the-fly initializer.
+    def self._otf_init    #:nodoc:
+      # Consider job done, replace self with a blank.
+      class_eval {
+        def self._otf_init    #:nodoc:
+        end
+      }
+
+      _initialize
+    end
+
+    # Interactively edit code snippet.
     def self.edit
-      ##p "R::H before", Readline::HISTORY.to_a
-      ##p "@history at inv", @history
+      _otf_init
 
-      # Push stuff into RL history.
-      npushed = @history.size
-      @history.each {|s| Readline::HISTORY.push s}
-
-      ##p "R::H after push", Readline::HISTORY.to_a
-
-      # NOTE: Readline help is missing. Copied from somewhere else.
-      input = Readline.readline("(snippet)>> ", true)
-
-      if not input.empty?
-        # Accept entry.
-        @history << input
-
-        # ["wan", "tew", "free", "tew"] should render into ["wan", "free", "tew"] with "tew" being the last input shippet.
-        @history = (@history.reverse.uniq).reverse
+      # Gracefully catch Ctrl-C.
+      old_sigint = trap("INT") do
+        puts "\nAborted"
+        return nil
       end
 
-      # Pop stuff out of RL history.
-      (npushed + 1).times {Readline::HISTORY.pop}
+      #DEBUG
+      ##p "RH at inv", Readline::HISTORY.to_a
+      ##p "@history at inv", @history
 
-      ##p "R::H after", Readline::HISTORY.to_a
+      rl_history = _replace_rl_history(@history)
 
-      # Save history -- we can't know when the session is going to end.
+      ##p "RH at cp 1", Readline::HISTORY.to_a    #DEBUG
+
+      # Read input.
+      # NOTE: Readline help is missing.
+      input = Readline.readline(IrbHacks.conf.snippet_prompt, true).strip
+
+      return nil if input.empty?
+
+      # Accept input.
+      @history << input
+
+      # Remove duplicates. Most recent bubble up.
+      # [1, 2, 3, 2] will render into [1, 3, 2] with 2 being the last snippet.
+      @history = (@history.reverse.uniq).reverse
+
+      ##p "RH after restore", Readline::HISTORY.to_a    #DEBUG
+
+      # Save our history now.
       save_history
 
       # Don't clutter IRB screen with anything extra.
       nil
+    ensure
+      ##puts "-- ensure"    #DEBUG
+      trap("INT", &old_sigint) if old_sigint
+      _replace_rl_history(rl_history) if rl_history
     end
 
     def self.history
@@ -48,20 +71,19 @@ module IrbHacks   #:nodoc:
       @history = ar
     end
 
+    # Load history from a file.
     def self.load_history
       @history = begin
-        content = File.read(HISTORY_FILE)
-        YAML.load(content)
+        File.readlines(File.expand_path(IrbHacks.conf.snippet_history_file)).map(&:chomp)
       rescue
-        nil
+        [%{puts "YOUR test code here"}]
       end
-
-      @history = [%{puts "YOUR test code here"}] if not @history
     end
 
-    # Run code snippet.
-    # If <tt>IrbHacks.break</tt> is called anywhere, immediately return its argument.
+    # Run latest edited code snippet. If IrbHacks::break is called anywhere, immediately return its argument.
     def self.run(*args, &block)
+      _otf_init
+
       if (code = @history.last)
         begin
           eval(code, &block)
@@ -72,16 +94,25 @@ module IrbHacks   #:nodoc:
       end
     end
 
+    # Save history to a file.
     def self.save_history
-      # Truncate a saved version of @history.
-      hist = @history.size > HISTORY_SIZE ? @history.slice(-HISTORY_SIZE..-1) : @history
-      File.open(HISTORY_FILE, "w") do |f|
-        f.write YAML.dump(hist)
+      # Truncate and save history.
+      # NOTE: It's more logical (WYSIWYG) to truncate @history live, not its copy. Thus the user will see what's going to be saved & restored.
+      @history.slice!(0..-(IrbHacks.conf.snippet_history_size + 1))
+      File.open(File.expand_path(IrbHacks.conf.snippet_history_file), "w") do |f|
+        f.puts @history
       end
     end
 
-    #--------------------------------------- Init
+    #---------------------------------------
 
-    load_history
+    # Clear Readline history and optionally replace it with new content.
+    # Return previous content.
+    def self._replace_rl_history(ar = nil)    #:nodoc:
+      out = []
+      while (s = Readline::HISTORY.shift); out << s; end
+      ar.each {|s| Readline::HISTORY << s} if ar
+      out
+    end
   end # Snippet
 end # IrbHacks
