@@ -24,13 +24,13 @@ irb> ae
 (snippet)>>
 ~~~
 
-If you see "(snippet)", you're ready to go.
+If you see `(snippet)`, you're ready to go.
 
 
 The hacks
 ---------
 
-### Code Snippets -- `a` and `ae` ###
+### Code snippets -- `a` and `ae` ###
 
 There's often a need to invoke our work-in-progress code a number of times using the same arguments, wrapping block, etc. For that, "code snippets" feature is quite handy.
 
@@ -159,7 +159,7 @@ Suppose you're debugging the code which contains something like:
 
 ~~~
 csv.each_with_index do |fc_row, i|
-  row = OpenHash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
+  row = Hash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
   ...
 ~~~
 
@@ -167,7 +167,7 @@ There's something wrong with the code and you want to see if `row` is given the 
 
 ~~~
 csv.each_with_index do |fc_row, i|
-  row = OpenHash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
+  row = Hash[*fc_row.map {|k, v| [(k.to_sym rescue k), (v.to_s.strip rescue v)]}.flatten(1)]
   IrbHacks.break(row)
 ~~~
 
