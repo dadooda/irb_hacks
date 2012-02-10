@@ -27,10 +27,10 @@ task :rebuild => [:gemspec, :build]
 
 desc "Push (publish) gem to RubyGems.org"
 task :push do
-  # Yet found no way to ask Jeweler forge a complete version string for us.
+  # NOTE: Yet found no way to ask Jeweler forge a complete version string for us.
   vh = YAML.load(File.read("VERSION.yml"))
-  version = [vh[:major], vh[:minor], vh[:patch], (if (v = vh[:build]); v; end)].compact.join(".")
-  pkgfile = File.join("pkg", [GEM_NAME, "-", version, ".gem"].join)
+  version = [vh[:major], vh[:minor], vh[:patch], vh[:build]].compact.join(".")
+  pkgfile = File.join("pkg", "#{GEM_NAME}-#{version}.gem")
   Kernel.system("gem", "push", pkgfile)
 end
 
@@ -41,23 +41,4 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
   #rdoc.options << "--line-numbers"
   #rdoc.options << "--inline-source"
   rdoc.rdoc_files.include("lib/**/*.rb")
-end
-
-#Rake::GemPackageTask.new(spec) do |p|
-#  p.need_tar = true if RUBY_PLATFORM !~ /mswin/
-#end
-
-desc "Compile README preview"
-task :readme do
-  require "kramdown"
-
-  doc = Kramdown::Document.new(File.read "README.md")
-
-  fn = "README.html"
-  puts "Writing '#{fn}'..."
-  File.open(fn, "w") do |f|
-    f.write(File.read "dev/head.html")
-    f.write(doc.to_html)
-  end
-  puts ": ok"
 end

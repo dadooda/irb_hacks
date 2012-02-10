@@ -86,7 +86,8 @@ module IrbHacks
 
       if (code = @history.last)
         begin
-          eval(code, &block)
+          # NOTE: Passing `binding` is important to provide a better backtrace when exception occurs.
+          eval(code, binding, &block)
         rescue IrbHacks::BreakException => e
           # If invoked as documented, `e.message` is always an array.
           e.message[0]
