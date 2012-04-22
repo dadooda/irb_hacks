@@ -24,7 +24,7 @@ module IrbHacks   #:doc:
   #   Reading name...
   #   => "John Smith"
   def self.break(value = nil)
-    raise BreakException, [value]
+    raise BreakException.new(:value => value)
   end
 
   # Access configuration object. See IrbHacks::Config.
