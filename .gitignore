@@ -1,9 +1,13 @@
-# General Ruby, sorted by first letter.
+# General Ruby.
+/.bundle
 .old*
 *-old*
-.ref*
+.ref-*
+/.rvmrc
 
 # Project-specific.
+/*.rb
 /doc/
 /pkg/
-/.rvmrc
+/.yardoc
+/var/
