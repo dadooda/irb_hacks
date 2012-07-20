@@ -2,51 +2,79 @@ module IrbHacks
   module CoreExtensions   #:nodoc:
     module Kernel   #:nodoc:
       module SingletonMethods   #:nodoc:
-        # See InstanceMethods for documentation.
+        # @see {InstanceMethods#less}
         def less(*args, &block)
-          if not block
-            # Non-block invocation.
-            if args.size < 1
-              # We're interactive anyway. Why not give user a quick prompt?
-              STDERR.puts "Nothing to show. Invoke as less(args) or less(options, &block)"
+          # Handle content & options.
+          content = []
+          o = {}
+          options = {}
+
+          begin
+            if block
+              args.each do |arg|
+                if arg.is_a? Hash
+                  options.merge! arg
+                elsif [String, Symbol].any? {|klass| arg.is_a? klass}
+                  options.merge!(arg.to_sym => true)
+                else
+                  raise ArgumentError, "Unsupported argument: #{arg.inspect}"
+                end
+              end
+
+              o[k = :line] = options.delete(k)
+              o[k = :stderr] = options.delete(k)
             else
-              File.popen(IrbHacks.conf.less_cmd, "w") do |f|
-                f.puts args
+              # Non-block.
+              args.each do |arg|
+                if arg.is_a? Hash
+                  options.merge! arg
+                else
+                  content << arg
+                end
               end
-            end
-          else
-            # Block invocation.
 
-            # Handle options.
-            options = {}
+              o[k = :line] = options.delete(k)
+            end # if block
 
-            args.each do |arg|
-              if arg.is_a? Hash
-                ##p "arg hash", arg
-                options.merge! arg
-              elsif [Symbol, String].include? arg.class
-                ##p "arg sym/str", arg
-                options.merge! arg.to_sym => true
-              else
-                raise ArgumentError, "Unsupported argument #{arg.inspect}"
-              end
+            if content.empty?
+              raise ArgumentError, "No content to browse"
             end
 
-            o_stderr = (v = options.delete(:stderr)).nil?? false : v
+            if not options.empty?
+              raise ArgumentError, "Unknown option(s): #{options.inspect}"
+            end
+          rescue ArgumentError => e
+            # NOTE: We are interactive, print it friendly.
+            return STDERR.puts e.message
+          end # begin/rescue
 
-            raise ArgumentError, "Unknown option(s): #{options.inspect}" if not options.empty?
+          ##DT.p "content", content
+          ##DT.p "options", options
+          ##DT.p "o", o
 
+          cmd = [
+            IrbHacks.conf.less_cmd,
+            ("+#{o[:line]}" if o[:line]),
+          ].compact.join(" ")
+
+          # Run the pager.
+          if block
             old_stdout = STDOUT.clone
-            old_stderr = STDERR.clone if o_stderr
+            old_stderr = STDERR.clone if o[:stderr]
 
-            File.popen(IrbHacks.conf.less_cmd, "w") do |f|
+            File.popen(cmd, "w") do |f|
               STDOUT.reopen(f)
-              STDERR.reopen(f) if o_stderr
+              STDERR.reopen(f) if o[:stderr]
               yield
               STDOUT.reopen(old_stdout)
-              STDERR.reopen(old_stderr) if o_stderr
+              STDERR.reopen(old_stderr) if o[:stderr]
             end
-          end # if block
+          else
+            # Non-block.
+            File.popen(cmd, "w") do |f|
+              f.puts content
+            end
+          end
 
           nil
         end # less
@@ -55,12 +83,13 @@ module IrbHacks
       module InstanceMethods
         private
 
-        # Dump program data with GNU <tt>less</tt> or the other configured OS pager.
+        # Browse program data with GNU <tt>less</tt> or other configured OS pager.
         #
         # Plain form:
         #
+        #   less "hello"
         #   less "hello", "world"
-        #   less mydata
+        #   less data, :line => 10
         #
         # Block form:
         #
@@ -73,15 +102,9 @@ module IrbHacks
         #     STDERR.puts "to stderr"
         #   end
         #
-        # Block form options:
+        #   less(:stderr) {...}     # Shortcut form of saying `:stderr => true`.
         #
-        #   :stderr => T|F      # Redirect STDERR too.
-        #
-        # If block form option is String or Symbol, it's automatically
-        # converted to Hash like <tt>{:var => true}</tt>. Thus, you can write <tt>less(:stderr)</tt>
-        # for <tt>less(:stderr => true)</tt>, they are functionally identical.
-        #
-        # See also IrbHacks::Config::less_cmd.
+        # @see {IrbHacks::Config::less_cmd}
         def less(*args, &block)
           ::Kernel.less(*args, &block)
         end
