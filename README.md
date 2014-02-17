@@ -1,6 +1,17 @@
 Yet another set of IRB hacks
 ============================
 
+IMPORTANT INFORMATION for Rails 4.0.x users
+-------------------------------------------
+
+2014-02-17: I've noticed that under Rails 4.0.2 and Ruby 2.1.0 `irb_hacks`
+is badly affecting the development backtrace reporter.
+I.e., "We're sorry ..." is displayed even in development environment with no details in logs, too.
+
+This is causing major inconvenience and I'm looking for opportunities to fix this issue when time permits.
+Until then, please stay warned.
+
+
 Setup
 -----
 

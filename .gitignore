@@ -3,7 +3,7 @@
 .old*
 *-old*
 .ref-*
-/.rvmrc
+/.ruby-*
 
 # Project-specific.
 /*.rb
